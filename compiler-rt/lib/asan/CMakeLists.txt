@@ -33,9 +33,9 @@ set(ASAN_SOURCES
   )
 
 if (NOT WIN32 AND NOT APPLE)
-  list(APPEND ASAN_SOURCES
-    asan_interceptors_vfork.S
-    )
+  # list(APPEND ASAN_SOURCES
+  #   asan_interceptors_vfork.S
+  #   )
 endif()
 
 set(ASAN_CXX_SOURCES

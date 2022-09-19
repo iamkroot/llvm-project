@@ -69,7 +69,7 @@
 // will evaluate to a null pointer when not defined.
 #ifndef SANITIZER_SUPPORTS_WEAK_HOOKS
 #if (SANITIZER_LINUX || SANITIZER_SOLARIS) && !SANITIZER_GO
-# define SANITIZER_SUPPORTS_WEAK_HOOKS 1
+# define SANITIZER_SUPPORTS_WEAK_HOOKS 0
 // Before Xcode 4.5, the Darwin linker doesn't reliably support undefined
 // weak symbols.  Mac OS X 10.9/Darwin 13 is the first release only supported
 // by Xcode >= 4.5.
