@@ -1,14 +1,15 @@
 #include <cstdio>
-void* operator new[](unsigned long, char c) {
+void* operator new[](unsigned long, const char* c) {
+    printf(c);
     return (void*)123;
 }
 
-int main(int argc, char *argv[argc]) {
-    fprintf(stderr, argv[0]);
+int main(int argc, char *argv[]) {
+    printf(argv[1]);
     // fflush(stdout);
-    int *array = new('c') int[100];
+    int *array = new(argv[1]) int[100];
     // printf(argv[1], array);
     // delete[] array;
     // printf(argv[2]);
-    return argc;  // BOOM
+    return array[5];  // BOOM
 }

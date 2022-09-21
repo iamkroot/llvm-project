@@ -3,66 +3,63 @@ source_filename = "use_after_free.cpp"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
-%struct._IO_FILE = type { i32, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, %struct._IO_marker*, %struct._IO_FILE*, i32, i32, i64, i16, i8, [1 x i8], i8*, i64, %struct._IO_codecvt*, %struct._IO_wide_data*, %struct._IO_FILE*, i8*, i64, i32, [20 x i8] }
-%struct._IO_marker = type opaque
-%struct._IO_codecvt = type opaque
-%struct._IO_wide_data = type opaque
-
-@stderr = external dso_local global %struct._IO_FILE*, align 8
-
-; Function Attrs: mustprogress noinline nounwind optnone uwtable
-define dso_local noundef i8* @_Znamc(i64 noundef %0, i8 noundef signext %1) #0 !dbg !208 {
+; Function Attrs: mustprogress noinline optnone uwtable
+define dso_local noundef i8* @_ZnamPKc(i64 noundef %0, i8* noundef %1) #0 !dbg !208 {
   %3 = alloca i64, align 8
-  %4 = alloca i8, align 1
+  %4 = alloca i8*, align 8
   store i64 %0, i64* %3, align 8
   call void @llvm.dbg.declare(metadata i64* %3, metadata !212, metadata !DIExpression()), !dbg !213
-  store i8 %1, i8* %4, align 1
-  call void @llvm.dbg.declare(metadata i8* %4, metadata !214, metadata !DIExpression()), !dbg !215
-  ret i8* inttoptr (i64 123 to i8*), !dbg !216
+  store i8* %1, i8** %4, align 8
+  call void @llvm.dbg.declare(metadata i8** %4, metadata !214, metadata !DIExpression()), !dbg !215
+  %5 = load i8*, i8** %4, align 8, !dbg !216
+  %6 = call i32 (i8*, ...) @printf(i8* noundef %5), !dbg !217
+  ret i8* inttoptr (i64 123 to i8*), !dbg !218
 }
 
 ; Function Attrs: nofree nosync nounwind readnone speculatable willreturn
 declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
+declare dso_local i32 @printf(i8* noundef, ...) #2
+
 ; Function Attrs: mustprogress noinline norecurse optnone uwtable
-define dso_local noundef i32 @main(i32 noundef %0, i8** noundef %1) #2 !dbg !217 {
+define dso_local noundef i32 @main(i32 noundef %0, i8** noundef %1) #3 !dbg !219 {
   %3 = alloca i32, align 4
   %4 = alloca i32, align 4
   %5 = alloca i8**, align 8
   %6 = alloca i32*, align 8
   store i32 0, i32* %3, align 4
   store i32 %0, i32* %4, align 4
-  call void @llvm.dbg.declare(metadata i32* %4, metadata !221, metadata !DIExpression()), !dbg !222
+  call void @llvm.dbg.declare(metadata i32* %4, metadata !223, metadata !DIExpression()), !dbg !224
   store i8** %1, i8*** %5, align 8
-  call void @llvm.dbg.declare(metadata i8*** %5, metadata !223, metadata !DIExpression()), !dbg !224
-  %7 = load i32, i32* %4, align 4, !dbg !225
-  %8 = zext i32 %7 to i64
-  %9 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !dbg !226
-  %10 = load i8**, i8*** %5, align 8, !dbg !227
-  %11 = getelementptr inbounds i8*, i8** %10, i64 0, !dbg !227
-  %12 = load i8*, i8** %11, align 8, !dbg !227
-  %13 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %9, i8* noundef %12), !dbg !228
+  call void @llvm.dbg.declare(metadata i8*** %5, metadata !225, metadata !DIExpression()), !dbg !226
+  %7 = load i8**, i8*** %5, align 8, !dbg !227
+  %8 = getelementptr inbounds i8*, i8** %7, i64 1, !dbg !227
+  %9 = load i8*, i8** %8, align 8, !dbg !227
+  %10 = call i32 (i8*, ...) @printf(i8* noundef %9), !dbg !228
   call void @llvm.dbg.declare(metadata i32** %6, metadata !229, metadata !DIExpression()), !dbg !231
-  %14 = call noundef i8* @_Znamc(i64 noundef 400, i8 noundef signext 99), !dbg !232, !heapallocsite !27
-  %15 = bitcast i8* %14 to i32*, !dbg !232
+  %11 = load i8**, i8*** %5, align 8, !dbg !232
+  %12 = getelementptr inbounds i8*, i8** %11, i64 1, !dbg !232
+  %13 = load i8*, i8** %12, align 8, !dbg !232
+  %14 = call noundef i8* @_ZnamPKc(i64 noundef 400, i8* noundef %13), !dbg !233, !heapallocsite !27
+  %15 = bitcast i8* %14 to i32*, !dbg !233
   store i32* %15, i32** %6, align 8, !dbg !231
-  %16 = load i32, i32* %4, align 4, !dbg !233
-  ret i32 %16, !dbg !234
+  %16 = load i32*, i32** %6, align 8, !dbg !234
+  %17 = getelementptr inbounds i32, i32* %16, i64 5, !dbg !234
+  %18 = load i32, i32* %17, align 4, !dbg !234
+  ret i32 %18, !dbg !235
 }
 
-declare dso_local i32 @fprintf(%struct._IO_FILE* noundef, i8* noundef, ...) #3
-
-attributes #0 = { mustprogress noinline nounwind optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #0 = { mustprogress noinline optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { nofree nosync nounwind readnone speculatable willreturn }
-attributes #2 = { mustprogress noinline norecurse optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-attributes #3 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #2 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #3 = { mustprogress noinline norecurse optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!202, !203, !204, !205, !206}
 !llvm.ident = !{!207}
 
-!0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus_14, file: !1, producer: "clang version 14.0.6 (https://github.com/llvm/llvm-project.git f28c006a5895fc0e329fe15fead81e37457cb1d1)", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug, retainedTypes: !2, imports: !4, splitDebugInlining: false, nameTableKind: None)
-!1 = !DIFile(filename: "use_after_free.cpp", directory: "/home/krut/llvm-project/asan", checksumkind: CSK_MD5, checksum: "a6ab78a8c7a999b04d0bba31f896c4df")
+!0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus_14, file: !1, producer: "clang version 14.0.6 (https://github.com/iamkroot/llvm-project.git f2a6a44d49eaeb1004017c71ef62c470cb4b5ac6)", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug, retainedTypes: !2, imports: !4, splitDebugInlining: false, nameTableKind: None)
+!1 = !DIFile(filename: "use_after_free.cpp", directory: "/home/krut/llvm-project/asan", checksumkind: CSK_MD5, checksum: "c07ff10037808c1e75dc98cce062c5d8")
 !2 = !{!3}
 !3 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 !4 = !{!5, !12, !18, !23, !28, !30, !32, !34, !36, !43, !50, !57, !61, !65, !69, !77, !81, !83, !88, !94, !98, !105, !107, !111, !115, !119, !121, !125, !129, !131, !135, !137, !139, !143, !147, !151, !155, !159, !163, !165, !172, !176, !180, !185, !187, !189, !193, !197, !198, !199, !200, !201}
@@ -268,31 +265,32 @@ attributes #3 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protect
 !204 = !{i32 1, !"wchar_size", i32 4}
 !205 = !{i32 7, !"uwtable", i32 1}
 !206 = !{i32 7, !"frame-pointer", i32 2}
-!207 = !{!"clang version 14.0.6 (https://github.com/llvm/llvm-project.git f28c006a5895fc0e329fe15fead81e37457cb1d1)"}
-!208 = distinct !DISubprogram(name: "operator new[]", linkageName: "_Znamc", scope: !1, file: !1, line: 2, type: !209, scopeLine: 2, flags: DIFlagPrototyped, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !211)
+!207 = !{!"clang version 14.0.6 (https://github.com/iamkroot/llvm-project.git f2a6a44d49eaeb1004017c71ef62c470cb4b5ac6)"}
+!208 = distinct !DISubprogram(name: "operator new[]", linkageName: "_ZnamPKc", scope: !1, file: !1, line: 2, type: !209, scopeLine: 2, flags: DIFlagPrototyped, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !211)
 !209 = !DISubroutineType(types: !210)
-!210 = !{!3, !75, !48}
+!210 = !{!3, !75, !55}
 !211 = !{}
 !212 = !DILocalVariable(arg: 1, scope: !208, file: !1, line: 2, type: !75)
 !213 = !DILocation(line: 2, column: 35, scope: !208)
-!214 = !DILocalVariable(name: "c", arg: 2, scope: !208, file: !1, line: 2, type: !48)
-!215 = !DILocation(line: 2, column: 42, scope: !208)
-!216 = !DILocation(line: 3, column: 5, scope: !208)
-!217 = distinct !DISubprogram(name: "main", scope: !1, file: !1, line: 6, type: !218, scopeLine: 6, flags: DIFlagPrototyped, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !211)
-!218 = !DISubroutineType(types: !219)
-!219 = !{!27, !27, !220}
-!220 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !47, size: 64)
-!221 = !DILocalVariable(name: "argc", arg: 1, scope: !217, file: !1, line: 6, type: !27)
-!222 = !DILocation(line: 6, column: 14, scope: !217)
-!223 = !DILocalVariable(name: "argv", arg: 2, scope: !217, file: !1, line: 6, type: !220)
-!224 = !DILocation(line: 6, column: 26, scope: !217)
-!225 = !DILocation(line: 6, column: 31, scope: !217)
-!226 = !DILocation(line: 7, column: 13, scope: !217)
-!227 = !DILocation(line: 7, column: 21, scope: !217)
-!228 = !DILocation(line: 7, column: 5, scope: !217)
-!229 = !DILocalVariable(name: "array", scope: !217, file: !1, line: 9, type: !230)
+!214 = !DILocalVariable(name: "c", arg: 2, scope: !208, file: !1, line: 2, type: !55)
+!215 = !DILocation(line: 2, column: 49, scope: !208)
+!216 = !DILocation(line: 3, column: 12, scope: !208)
+!217 = !DILocation(line: 3, column: 5, scope: !208)
+!218 = !DILocation(line: 4, column: 5, scope: !208)
+!219 = distinct !DISubprogram(name: "main", scope: !1, file: !1, line: 7, type: !220, scopeLine: 7, flags: DIFlagPrototyped, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !211)
+!220 = !DISubroutineType(types: !221)
+!221 = !{!27, !27, !222}
+!222 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !47, size: 64)
+!223 = !DILocalVariable(name: "argc", arg: 1, scope: !219, file: !1, line: 7, type: !27)
+!224 = !DILocation(line: 7, column: 14, scope: !219)
+!225 = !DILocalVariable(name: "argv", arg: 2, scope: !219, file: !1, line: 7, type: !222)
+!226 = !DILocation(line: 7, column: 26, scope: !219)
+!227 = !DILocation(line: 8, column: 12, scope: !219)
+!228 = !DILocation(line: 8, column: 5, scope: !219)
+!229 = !DILocalVariable(name: "array", scope: !219, file: !1, line: 10, type: !230)
 !230 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !27, size: 64)
-!231 = !DILocation(line: 9, column: 10, scope: !217)
-!232 = !DILocation(line: 9, column: 18, scope: !217)
-!233 = !DILocation(line: 13, column: 12, scope: !217)
-!234 = !DILocation(line: 13, column: 5, scope: !217)
+!231 = !DILocation(line: 10, column: 10, scope: !219)
+!232 = !DILocation(line: 10, column: 22, scope: !219)
+!233 = !DILocation(line: 10, column: 18, scope: !219)
+!234 = !DILocation(line: 14, column: 12, scope: !219)
+!235 = !DILocation(line: 14, column: 5, scope: !219)

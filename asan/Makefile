@@ -3,7 +3,7 @@ LLVM_LIBS := $(shell llvm-config --system-libs --libs executionengine mcjit supp
 LLVM_LIBDIR := $(shell llvm-config --libdir)
 
 manual_asan.o: manual_asan.cpp
-	clang++ -fuse-ld=/usr/bin/mold $(CPPFLAGS) -L${LLVM_LIBDIR} -I/usr/local/include manual_asan.cpp ${LLVM_LIBS} -o manual_asan.o
+	clang++ -shared-libsan -fsanitize=address -fuse-ld=/usr/bin/mold $(CPPFLAGS) -L${LLVM_LIBDIR} -I/usr/local/include manual_asan.cpp ${LLVM_LIBS} -o manual_asan.o
 
 manual_asan: manual_asan.o
 	./manual_asan.o

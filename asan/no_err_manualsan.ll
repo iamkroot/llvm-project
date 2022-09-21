@@ -3,11 +3,6 @@ source_filename = "no_err.cpp"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
-$asan.module_ctor = comdat any
-
-@llvm.used = appending global [1 x i8*] [i8* bitcast (void ()* @asan.module_ctor to i8*)], section "llvm.metadata"
-@llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 1, void ()* @asan.module_ctor, i8* bitcast (void ()* @asan.module_ctor to i8*) }]
-
 ; Function Attrs: mustprogress noinline norecurse optnone sanitize_address uwtable
 define dso_local noundef i32 @main(i32 noundef %0, i8** noundef %1) #0 !dbg !207 {
   %3 = alloca i32, align 4
@@ -20,60 +15,15 @@ define dso_local noundef i32 @main(i32 noundef %0, i8** noundef %1) #0 !dbg !207
   call void @llvm.dbg.declare(metadata i8*** %5, metadata !214, metadata !DIExpression()), !dbg !215
   %6 = load i8**, i8*** %5, align 8, !dbg !216
   %7 = getelementptr inbounds i8*, i8** %6, i64 1, !dbg !216
-  %8 = ptrtoint i8** %7 to i64, !dbg !216
-  %9 = lshr i64 %8, 3, !dbg !216
-  %10 = add i64 %9, 2147450880, !dbg !216
-  %11 = inttoptr i64 %10 to i8*, !dbg !216
-  %12 = load i8, i8* %11, align 1, !dbg !216
-  %13 = icmp ne i8 %12, 0, !dbg !216
-  br i1 %13, label %14, label %15, !dbg !216
-
-14:                                               ; preds = %2
-  call void @__asan_report_load8(i64 %8) #5, !dbg !216
-  unreachable, !dbg !216
-
-15:                                               ; preds = %2
-  %16 = load i8*, i8** %7, align 8, !dbg !216
-  %17 = call i32 (i8*, ...) @printf(i8* noundef %16), !dbg !217
-  %18 = load i8**, i8*** %5, align 8, !dbg !218
-  %19 = getelementptr inbounds i8*, i8** %18, i64 1, !dbg !218
-  %20 = ptrtoint i8** %19 to i64, !dbg !218
-  %21 = lshr i64 %20, 3, !dbg !218
-  %22 = add i64 %21, 2147450880, !dbg !218
-  %23 = inttoptr i64 %22 to i8*, !dbg !218
-  %24 = load i8, i8* %23, align 1, !dbg !218
-  %25 = icmp ne i8 %24, 0, !dbg !218
-  br i1 %25, label %26, label %27, !dbg !218
-
-26:                                               ; preds = %15
-  call void @__asan_report_load8(i64 %20) #5, !dbg !218
-  unreachable, !dbg !218
-
-27:                                               ; preds = %15
-  %28 = load i8*, i8** %19, align 8, !dbg !218
-  %29 = getelementptr inbounds i8, i8* %28, i64 1, !dbg !218
-  %30 = ptrtoint i8* %29 to i64, !dbg !218
-  %31 = lshr i64 %30, 3, !dbg !218
-  %32 = add i64 %31, 2147450880, !dbg !218
-  %33 = inttoptr i64 %32 to i8*, !dbg !218
-  %34 = load i8, i8* %33, align 1, !dbg !218
-  %35 = icmp ne i8 %34, 0, !dbg !218
-  br i1 %35, label %36, label %41, !dbg !218, !prof !219
-
-36:                                               ; preds = %27
-  %37 = and i64 %30, 7, !dbg !218
-  %38 = trunc i64 %37 to i8, !dbg !218
-  %39 = icmp sge i8 %38, %34, !dbg !218
-  br i1 %39, label %40, label %41, !dbg !218
-
-40:                                               ; preds = %36
-  call void @__asan_report_load1(i64 %30) #5, !dbg !218
-  unreachable
-
-41:                                               ; preds = %36, %27
-  %42 = load i8, i8* %29, align 1, !dbg !218
-  %43 = sext i8 %42 to i32, !dbg !218
-  ret i32 %43, !dbg !220
+  %8 = load i8*, i8** %7, align 8, !dbg !216
+  %9 = call i32 (i8*, ...) @printf(i8* noundef %8), !dbg !217
+  %10 = load i8**, i8*** %5, align 8, !dbg !218
+  %11 = getelementptr inbounds i8*, i8** %10, i64 1, !dbg !218
+  %12 = load i8*, i8** %11, align 8, !dbg !218
+  %13 = getelementptr inbounds i8, i8* %12, i64 1, !dbg !218
+  %14 = load i8, i8* %13, align 1, !dbg !218
+  %15 = sext i8 %14 to i32, !dbg !218
+  ret i32 %15, !dbg !219
 }
 
 ; Function Attrs: nofree nosync nounwind readnone speculatable willreturn
@@ -81,153 +31,9 @@ declare void @llvm.dbg.declare(metadata %0, metadata %1, metadata %2) #1
 
 declare dso_local i32 @printf(i8* noundef %0, ...) #2
 
-declare void @__asan_report_load_n(i64 %0, i64 %1)
-
-declare void @__asan_loadN(i64 %0, i64 %1)
-
-declare void @__asan_report_load1(i64 %0)
-
-declare void @__asan_load1(i64 %0)
-
-declare void @__asan_report_load2(i64 %0)
-
-declare void @__asan_load2(i64 %0)
-
-declare void @__asan_report_load4(i64 %0)
-
-declare void @__asan_load4(i64 %0)
-
-declare void @__asan_report_load8(i64 %0)
-
-declare void @__asan_load8(i64 %0)
-
-declare void @__asan_report_load16(i64 %0)
-
-declare void @__asan_load16(i64 %0)
-
-declare void @__asan_report_store_n(i64 %0, i64 %1)
-
-declare void @__asan_storeN(i64 %0, i64 %1)
-
-declare void @__asan_report_store1(i64 %0)
-
-declare void @__asan_store1(i64 %0)
-
-declare void @__asan_report_store2(i64 %0)
-
-declare void @__asan_store2(i64 %0)
-
-declare void @__asan_report_store4(i64 %0)
-
-declare void @__asan_store4(i64 %0)
-
-declare void @__asan_report_store8(i64 %0)
-
-declare void @__asan_store8(i64 %0)
-
-declare void @__asan_report_store16(i64 %0)
-
-declare void @__asan_store16(i64 %0)
-
-declare void @__asan_report_exp_load_n(i64 %0, i64 %1, i32 %2)
-
-declare void @__asan_exp_loadN(i64 %0, i64 %1, i32 %2)
-
-declare void @__asan_report_exp_load1(i64 %0, i32 %1)
-
-declare void @__asan_exp_load1(i64 %0, i32 %1)
-
-declare void @__asan_report_exp_load2(i64 %0, i32 %1)
-
-declare void @__asan_exp_load2(i64 %0, i32 %1)
-
-declare void @__asan_report_exp_load4(i64 %0, i32 %1)
-
-declare void @__asan_exp_load4(i64 %0, i32 %1)
-
-declare void @__asan_report_exp_load8(i64 %0, i32 %1)
-
-declare void @__asan_exp_load8(i64 %0, i32 %1)
-
-declare void @__asan_report_exp_load16(i64 %0, i32 %1)
-
-declare void @__asan_exp_load16(i64 %0, i32 %1)
-
-declare void @__asan_report_exp_store_n(i64 %0, i64 %1, i32 %2)
-
-declare void @__asan_exp_storeN(i64 %0, i64 %1, i32 %2)
-
-declare void @__asan_report_exp_store1(i64 %0, i32 %1)
-
-declare void @__asan_exp_store1(i64 %0, i32 %1)
-
-declare void @__asan_report_exp_store2(i64 %0, i32 %1)
-
-declare void @__asan_exp_store2(i64 %0, i32 %1)
-
-declare void @__asan_report_exp_store4(i64 %0, i32 %1)
-
-declare void @__asan_exp_store4(i64 %0, i32 %1)
-
-declare void @__asan_report_exp_store8(i64 %0, i32 %1)
-
-declare void @__asan_exp_store8(i64 %0, i32 %1)
-
-declare void @__asan_report_exp_store16(i64 %0, i32 %1)
-
-declare void @__asan_exp_store16(i64 %0, i32 %1)
-
-declare i8* @__asan_memmove(i8* %0, i8* %1, i64 %2)
-
-declare i8* @__asan_memcpy(i8* %0, i8* %1, i64 %2)
-
-declare i8* @__asan_memset(i8* %0, i32 %1, i64 %2)
-
-declare void @__asan_handle_no_return()
-
-declare void @__sanitizer_ptr_cmp(i64 %0, i64 %1)
-
-declare void @__sanitizer_ptr_sub(i64 %0, i64 %1)
-
-; Function Attrs: nounwind readnone speculatable willreturn
-declare i1 @llvm.amdgcn.is.shared(i8* nocapture %0) #3
-
-; Function Attrs: nounwind readnone speculatable willreturn
-declare i1 @llvm.amdgcn.is.private(i8* nocapture %0) #3
-
-declare void @__asan_before_dynamic_init(i64 %0)
-
-declare void @__asan_after_dynamic_init()
-
-declare void @__asan_register_globals(i64 %0, i64 %1)
-
-declare void @__asan_unregister_globals(i64 %0, i64 %1)
-
-declare void @__asan_register_image_globals(i64 %0)
-
-declare void @__asan_unregister_image_globals(i64 %0)
-
-declare void @__asan_register_elf_globals(i64 %0, i64 %1, i64 %2)
-
-declare void @__asan_unregister_elf_globals(i64 %0, i64 %1, i64 %2)
-
-declare void @__asan_init()
-
-; Function Attrs: nounwind uwtable
-define internal void @asan.module_ctor() #4 comdat {
-  call void @__asan_init()
-  call void @__asan_version_mismatch_check_v8()
-  ret void
-}
-
-declare void @__asan_version_mismatch_check_v8()
-
 attributes #0 = { mustprogress noinline norecurse optnone sanitize_address uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { nofree nosync nounwind readnone speculatable willreturn }
 attributes #2 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-attributes #3 = { nounwind readnone speculatable willreturn }
-attributes #4 = { nounwind uwtable "frame-pointer"="all" }
-attributes #5 = { nomerge }
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!201, !202, !203, !204, !205}
@@ -452,5 +258,4 @@ attributes #5 = { nomerge }
 !216 = !DILocation(line: 4, column: 12, scope: !207)
 !217 = !DILocation(line: 4, column: 5, scope: !207)
 !218 = !DILocation(line: 5, column: 12, scope: !207)
-!219 = !{!"branch_weights", i32 1, i32 100000}
-!220 = !DILocation(line: 5, column: 5, scope: !207)
+!219 = !DILocation(line: 5, column: 5, scope: !207)

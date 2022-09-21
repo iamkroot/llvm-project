@@ -60,11 +60,8 @@ class MyMCJITMemoryManager : public SectionMemoryManager {
                                  llvm::StringRef section_name) override {
         auto *res =
             SectionMemoryManager::allocateCodeSection(size, alignment, section_id, section_name);
-        llvm::outs() << "MEM " << size << " " << alignment << " " << section_id << " "
-                     << section_name << "\n";
-        if (section_name.contains("xray") || section_name == ".text") {
-            printf("Mem %lu bytes %s %p\n", size, section_name.data(), res);
-        }
+        llvm::outs() << "MEM " << format_hex((uint64_t)res, 1) << " " << size << " " << section_id
+                     << " " << section_name << "\n";
 
         // printf("%p\n", res);
         return res;
@@ -77,11 +74,8 @@ class MyMCJITMemoryManager : public SectionMemoryManager {
                                  llvm::StringRef section_name, bool is_readonly) override {
         auto *res = SectionMemoryManager::allocateDataSection(size, alignment, section_id,
                                                               section_name, is_readonly);
-        llvm::outs() << "DATA " << size << " " << alignment << " " << section_id << " "
-                     << section_name << " " << format_hex((uint64_t)res, 1) << "\n";
-        if (section_name.contains("xray")) {
-            printf("Data %lu bytes %s %p\n", size, section_name.data(), res);
-        }
+        llvm::outs() << "DAT " << format_hex((uint64_t)res, 1) << " " << size << " " << section_id
+                     << " " << section_name << "\n";
         if (section_name == "asan_globals") {
             asan_globals_start = reinterpret_cast<uintptr_t>(res);
             asan_globals_end = reinterpret_cast<uintptr_t>(res + size);
@@ -118,7 +112,7 @@ class MyMCJITMemoryManager : public SectionMemoryManager {
         Section.InitializationImage =
             reinterpret_cast<uint8_t *>(LLVMRTDyldTLSSpace + UsedTLSStorage);
         Section.Offset = TLSOffset + UsedTLSStorage;
-        llvm::outs() << "offset " << format_hex(TLSOffset, 1) << "init "
+        llvm::outs() << "offset " << format_hex(TLSOffset, 1) << " init "
                      << format_hex((uint64_t)LLVMRTDyldTLSSpace, 1) << "\n";
 
         UsedTLSStorage += size;
@@ -130,16 +124,10 @@ class MyMCJITMemoryManager : public SectionMemoryManager {
 SmallVector<MyMCJITMemoryManager::Alloc, 4> MyMCJITMemoryManager::mem_allocs{};
 SmallVector<MyMCJITMemoryManager::Alloc, 8> MyMCJITMemoryManager::data_allocs{};
 
-void mallochook(const volatile void *ptr, size_t size) {
+void mallochook(const volatile void *ptr, size_t size) {}
+void freehook(const volatile void *ptr, size_t size) {}
 
-}
-void freehook(const volatile void *ptr, size_t size) {
-
-}
-
-void gmonstart(void) {
-
-}
+void gmonstart(void) {}
 
 int main(int argc, char const *argv[]) {
     LLVMInitializeNativeAsmPrinter();
@@ -160,10 +148,10 @@ int main(int argc, char const *argv[]) {
     LLVMInitializeTransformUtils(registry);
     LLVMInitializeVectorization(registry);
     // auto file = "no_err.ll";
-    auto file = "no_err.ll";
-    auto dumpfile = "no_err_manualsan.ll";
-    // auto file = "use_after_free_nosan.dbg.ll";
-    // auto dumpfile = "use_after_free_manualsan.ll";
+    // auto file = "no_err.ll";
+    // auto dumpfile = "no_err_manualsan.ll";
+    auto file = "use_after_free_nosan.dbg.ll";
+    auto dumpfile = "use_after_free_manualsan.ll";
 
     llvm::LLVMContext ctx{};
     SMDiagnostic err;
@@ -216,7 +204,14 @@ int main(int argc, char const *argv[]) {
     outs() << "running asan on module\n";
     mpm.run(*module);
     outs() << "Ran asan\n";
-
+    {
+        auto asan_ctor = module->getFunction("asan.module_ctor");
+        auto &entry = asan_ctor->getEntryBlock();
+        // move the "ret void" to the new bb
+        auto newbb = entry.splitBasicBlock(&entry.back());
+        entry.eraseFromParent();
+    }
+    // asan_ctor
     std::error_code EC;
     llvm::raw_fd_ostream outf{dumpfile, EC, sys::fs::OpenFlags::OF_Text};
     module->print(outf, nullptr, false, true);
@@ -246,11 +241,14 @@ int main(int argc, char const *argv[]) {
         return llvm::object::OwningBinary<object::ObjectFile>{std::move(ar), std::move(buf)};
     };
 
-    auto sh1 = load_shared_lib("/usr/local/lib/clang/14.0.6/lib/linux/libclang_rt.asan-x86_64.so");
-    eng->addObjectFile(std::move(sh1));
+    // auto sh1 =
+    // load_shared_lib("/usr/local/lib/clang/14.0.6/lib/linux/libclang_rt.asan-x86_64.so");
+    // eng->addObjectFile(std::move(sh1));
+    // auto sh2 = load_shared_lib("/usr/lib/x86_64-linux-gnu/libitm.so.1");
+    // eng->addObjectFile(std::move(sh2));
 
-    auto st1 = load_static_ar("/usr/lib/gcc/x86_64-linux-gnu/12/libitm.a");
-    eng->addArchive(std::move(st1));
+    // auto st1 = load_static_ar("/usr/lib/x86_64-linux-gnu/libitm.so.1");
+    // eng->addArchive(std::move(st1));
 
     // auto ar3 =
     //     load_static_ar("/usr/local/lib/clang/11.1.0/lib/linux/libclang_rt.asan-preinit-x86_64.a");
@@ -262,13 +260,14 @@ int main(int argc, char const *argv[]) {
     // eng->addArchive(std::move(ar2));
     // eng->addGlobalMapping("_ITM_deregisterTMCloneTable", 1);
     // eng->addGlobalMapping("_ITM_registerTMCloneTable", 1);
-    eng->addGlobalMapping("__gmon_start__", (uint64_t)(gmonstart));
-    // eng->addGlobalMapping("__gmon_end__", 1);
-    eng->addGlobalMapping("__lsan_default_options", 1);
-    eng->addGlobalMapping("__lsan_default_suppressions", 1);
-    eng->addGlobalMapping("__lsan_is_turned_off", 1);
-    eng->addGlobalMapping("__sanitizer_malloc_hook", (uint64_t)(mallochook));
-    eng->addGlobalMapping("__sanitizer_free_hook", (uint64_t)(freehook));
+    // eng->addGlobalMapping("__gmon_start__", (uint64_t)(gmonstart));
+    // // eng->addGlobalMapping("__gmon_end__", 1);
+    // eng->addGlobalMapping("__lsan_default_options", 1);
+    // eng->addGlobalMapping("__lsan_default_suppressions", 1);
+    // eng->addGlobalMapping("__lsan_is_turned_off", 1);
+    // eng->addGlobalMapping("__sanitizer_malloc_hook", (uint64_t)(mallochook));
+    // eng->addGlobalMapping("__sanitizer_free_hook", (uint64_t)(freehook));
+    // eng->addGlobalMapping("printf", (uint64_t)(&printf));
 
     eng->finalizeObject();
     printf("finalized\n");
@@ -284,8 +283,7 @@ int main(int argc, char const *argv[]) {
     outs() << "Running from main at " << llvm::format_hex(addr, 10) << "\n";
     using F = int (*)(int, const char *[]);
     auto mainf = reinterpret_cast<F>(addr);
-    const char *n[] = {"starting\n\0", "alloc array %p\n\0", "deleted array\n\0"};
-
+    const char *n[] = {"starting\n\0", "dummy\n", "alloc array %p\n\0", "deleted array\n\0"};
     auto i = (*mainf)(3, n);
     outs() << "Returned " << i << "\n";
 }
