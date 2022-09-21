@@ -262,7 +262,6 @@ void RuntimeDyldELF::resolveX86_64Relocation(const SectionEntry &Section,
                                              uint64_t SymOffset) {
   switch (Type) {
   default:
-    llvm::outs() << "Type: " << Type <<"\n";
     report_fatal_error("Relocation type not implemented yet!");
     break;
   case ELF::R_X86_64_NONE:
