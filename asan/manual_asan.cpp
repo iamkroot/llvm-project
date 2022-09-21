@@ -148,10 +148,10 @@ int main(int argc, char const *argv[]) {
     LLVMInitializeTransformUtils(registry);
     LLVMInitializeVectorization(registry);
     // auto file = "no_err.ll";
-    // auto file = "no_err.ll";
-    // auto dumpfile = "no_err_manualsan.ll";
-    auto file = "use_after_free_nosan.dbg.ll";
-    auto dumpfile = "use_after_free_manualsan.ll";
+    auto file = "no_err.ll";
+    auto dumpfile = "no_err_manualsan.ll";
+    // auto file = "use_after_free_nosan.dbg.ll";
+    // auto dumpfile = "use_after_free_manualsan.ll";
 
     llvm::LLVMContext ctx{};
     SMDiagnostic err;
